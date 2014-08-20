@@ -68,3 +68,8 @@ def test_email():
         == '<a href="mailto:me@ya.ru">mailto:me@ya.ru</a>'
     assert linkify('me@ya.ru') \
         == '<a href="mailto:me@ya.ru">me@ya.ru</a>'
+
+
+def test_nonascii():
+    assert linkify(u'http://\u5350.net/') \
+        == u'<a href="http://\u5350.net/">http://\u5350.net/</a>'
