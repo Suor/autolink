@@ -78,7 +78,7 @@ def linkify(text, attrs={}):
             href = proto + url
         href = escape_url(href)
 
-        repl = '{0!s}<a href="{1!s}"{2!s}>{3!s}</a>{4!s}{5!s}'
+        repl = u'{0!s}<a href="{1!s}"{2!s}>{3!s}</a>{4!s}{5!s}'
         return repl.format(opening,
                            href, attrs_text, url, punct,
                            closing)
