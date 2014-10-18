@@ -26,29 +26,28 @@ TLDS = """ac ad ae aero af ag ai al am an ao aq ar arpa as asia at au aw ax az
 
 TLDS.reverse()
 
-url_re = re.compile(
-    r"""\(*  # Match any opening parentheses.
+url_re = r"""\(*  # Match any opening parentheses.
     \b(?<![@.])(?:(?:{0}):/{{0,3}}(?:(?:\w+:)?\w+@)?)?  # http://
     ([\w-]+\.)+(?:{1})(?:\:\d+)?(?!\.\w)\b   # xx.yy.tld(:##)?
     (?:[/?][^\s\{{\}}\|\\\^\[\]`<>"]*)?
         # /path/zz (excluding "unsafe" chars from RFC 1738,
         # except for # and ~, which happen in practice)
-    """.format('|'.join(PROTOCOLS), '|'.join(TLDS)),
-    re.IGNORECASE | re.VERBOSE | re.UNICODE)
+    """.format('|'.join(PROTOCOLS), '|'.join(TLDS))
 
 proto_re = re.compile(r'^[\w-]+:/{0,3}', re.IGNORECASE)
 
 punct_re = re.compile(r'([\.,]*)$')
 
-email_re = re.compile(
-    r"""(?<!//|.:)(mailto:)?
+email_re = r"""(?<!//|.:)(mailto:)?
     \b(([-!#$%&'*+/=?^_`{0!s}|~0-9A-Z]+
         (\.[-!#$%&'*+/=?^_`{1!s}|~0-9A-Z]+)*  # dot-atom
     |^"([\001-\010\013\014\016-\037!#-\[\]-\177]
         |\\[\001-011\013\014\016-\177])*"  # quoted-string
     )@(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6})\.?  # domain
-    """,
-    re.IGNORECASE | re.MULTILINE | re.VERBOSE)
+    """
+
+combined_re = re.compile("(?P<url>{0})|(?P<email>{1})".format(url_re, email_re),
+                         re.IGNORECASE | re.MULTILINE | re.VERBOSE | re.UNICODE)
 
 
 def linkify(text, attrs={}):
@@ -64,8 +63,7 @@ def linkify(text, attrs={}):
         else:
             return '', s, ''
 
-    def link_repl(match, proto='http://'):
-        url = match.group(0)
+    def link_repl(url, proto='http://'):
         opening, url, closing = separate_parentheses(url)
 
         punct = re_find(punct_re, url)
@@ -83,18 +81,19 @@ def linkify(text, attrs={}):
                            href, attrs_text, url, punct,
                            closing)
 
-    def email_repl(match):
-        return link_repl(match, proto='mailto:')
+    def repl(match):
+        matches = match.groupdict()
+        if matches['url']:
+            return link_repl(matches['url'])
+        else:
+            return link_repl(matches['email'], proto='mailto:')
 
     # Prepare attrs
     attr = ' {0!s}="{1!s}"'
     attrs_text = ''.join(starmap(attr.format, attrs.items()))
 
     # Make replaces
-    text = force_unicode(text)
-    text = re.sub(url_re, link_repl, text)
-    text = re.sub(email_re, email_repl, text)
-    return text
+    return re.sub(combined_re, repl, force_unicode(text))
 
 
 def escape_url(url):

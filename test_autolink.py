@@ -73,3 +73,9 @@ def test_email():
 def test_nonascii():
     assert linkify(u'http://\u5350.net/') \
         == u'<a href="http://\u5350.net/">http://\u5350.net/</a>'
+
+
+def test_nested_email():
+    assert linkify('http://example.com?email=foo@example.com') \
+        == '<a href="http://example.com?email=foo@example.com">' \
+           'http://example.com?email=foo@example.com</a>'
