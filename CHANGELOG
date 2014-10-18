@@ -1,2 +1,5 @@
+0.1.2
+- fixed emails embeded into urls
+
 0.1.1
 - fixed unicode bug (Roman Imankulov)
